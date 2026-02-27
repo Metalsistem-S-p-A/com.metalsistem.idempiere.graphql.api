@@ -156,7 +156,7 @@ Response:
 {
   "data": {
     "model": {
-      "results": [ { "c_bpartner_id": 123, "name": "MetalSistem", "value": "MS", "isactive": true } ],
+      "results": [ { "c_bpartner_id": 123, "name": "Name", "value": "MS", "isactive": true } ],
       "totalRecords": 1,
       "totalPages": 1,
       "page": 0,
