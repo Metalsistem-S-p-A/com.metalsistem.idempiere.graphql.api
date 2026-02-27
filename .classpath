@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry exported="true" kind="lib" path="lib/graphql-builder.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/activemq-client.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/animal-sniffer-annotations.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/antlr4-runtime.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/aopalliance-repackaged.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/asm.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/asm-analysis.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/asm-commons.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/asm-tree.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/asm-util.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/bcprov-jdk15on.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/bcprov-jdk18on.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/caffeine.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/checker-qual.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/classgraph.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-codec.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-collections.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-collections4.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-compress.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-logging.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-math3.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-net.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/core.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/cryptacular.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/error_prone_annotations.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/failureaccess.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/fluent-hc.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/geronimo-j2ee-management_1.1_spec.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/geronimo-jms_1.1_spec.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/groovy.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/gson.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/guava.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/hawtbuf.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/hk2-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/hk2-locator.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/hk2-utils.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/httpclient.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/httpclient-cache.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/httpclient-osgi.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/httpcore.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/httpcore-nio.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/httpcore-osgi.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/httpmime.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/j2objc-annotations.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jackson-annotations.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jackson-core.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jackson-databind.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jackson-jaxrs-base.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jackson-jaxrs-json-provider.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jackson-module-jaxb-annotations.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jackson-module-jsonSchema.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jakarta.activation.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jakarta.activation-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jakarta.annotation-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jakarta.inject.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jakarta.mail.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jakarta.validation-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jakarta.ws.rs-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jakarta.xml.bind-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/java-dataloader.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/javassist.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jersey-client.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jersey-common.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jersey-container-servlet-core.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jersey-entity-filtering.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jersey-media-json-jackson.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jersey-server.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jetty-schemas.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jetty-servlet-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jetty-util.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jspecify.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jsr305.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/listenablefuture.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/log4j-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/log4j-to-slf4j.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/openpdf.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/openpdf-fonts-extra.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/org.apache.aries.spifly.dynamic.bundle.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/org.apache.felix.scr.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/org.apache.servicemix.bundles.cglib.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/org.apache.servicemix.bundles.xerces.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/org.osgi.namespace.extender.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/org.osgi.namespace.implementation.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/org.osgi.service.cm.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/org.osgi.service.component.annotations.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/org.osgi.service.component.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/org.osgi.service.event.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/org.osgi.service.prefs.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/org.osgi.util.function.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/org.osgi.util.promise.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/osgi.annotation.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/osgi-resource-locator.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/passay.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/pfl-asm.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/pfl-basic.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/pfl-dynamic.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/pfl-tf.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/reactive-streams.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/slf4j-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/slf4j-jdk14.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/super-csv.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/validation-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/graphql-java.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/graphql-java-extended-scalars.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+		<attributes>
+			<attribute name="module" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry kind="src" output="target/classes" path="src">
+		<attributes>
+			<attribute name="optional" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry exported="true" kind="lib" path="lib/java-jwt.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jwks-rsa.jar"/>
+	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="output" path="target/classes"/>
+</classpath>

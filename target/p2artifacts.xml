@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<?artifactRepository version='1.1.0'?>
+<artifacts size='2'>
+  <artifact classifier='osgi.bundle' id='com.metalsistem.idempiere.graphql.api' version='13.0.0.202602271105'>
+    <properties size='9'>
+      <property name='artifact.size' value='57396324'/>
+      <property name='download.size' value='57396324'/>
+      <property name='download.checksum.sha-512' value='4243497cf257f026d68b29ed227f4e5de3f5bfcb259c5d3919cece3fa15111a2610287fffa2b4124736742f123b6ebcc8615f2e36f77cd2c789a3075b1dce1c1'/>
+      <property name='download.checksum.sha-1' value='c10e4ece25af9bb14c68eb08fd03fd1a2fbd810b'/>
+      <property name='download.checksum.sha-256' value='7b1d40521ec8d85a07b9e9b65a06546f9e49be7014fb1b6e07edd3c4e394a6cc'/>
+      <property name='maven-groupId' value='com.metalsistem.idempiere.extensions'/>
+      <property name='maven-artifactId' value='com.metalsistem.idempiere.graphql.api'/>
+      <property name='maven-version' value='13.0.0-SNAPSHOT'/>
+      <property name='maven-type' value='eclipse-plugin'/>
+    </properties>
+  </artifact>
+  <artifact classifier='osgi.bundle' id='com.metalsistem.idempiere.graphql.api.source' version='13.0.0.202602271105'>
+    <properties size='10'>
+      <property name='artifact.size' value='114681'/>
+      <property name='download.size' value='114681'/>
+      <property name='download.checksum.sha-512' value='c02788c03ffe2556edf22b7b33d4b07b663b7d358be20d3b10d46d8116c54e45e65fa3751a42ce385b5a5dd64b6bf509c4acd82781fc1f3d79c03638ff4a6e97'/>
+      <property name='download.checksum.sha-1' value='8b9d2408cbe7798609dff93ed79b6952fd03c548'/>
+      <property name='download.checksum.sha-256' value='b7bdc346c7f8d5012c5108bd0a727bafb4719177c2b8d3e265dfca3d8d7ed33e'/>
+      <property name='maven-groupId' value='com.metalsistem.idempiere.extensions'/>
+      <property name='maven-artifactId' value='com.metalsistem.idempiere.graphql.api'/>
+      <property name='maven-version' value='13.0.0-SNAPSHOT'/>
+      <property name='maven-classifier' value='sources'/>
+      <property name='maven-type' value='java-source'/>
+    </properties>
+  </artifact>
+</artifacts>
