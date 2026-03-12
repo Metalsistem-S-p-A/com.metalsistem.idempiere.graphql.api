@@ -12,9 +12,12 @@
 package com.metalsistem.idempiere.graphql.resource;
 
 import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,14 +38,14 @@ import com.metalsistem.idempiere.graphql.api.util.ThreadLocalTrx;
 
 /**
  * Helper class for executing iDempiere processes from GraphQL
- * 
+ *
  * @author metalsis
  */
 public class GraphQLProcessRunner {
 
 	/**
 	 * Execute an iDempiere process
-	 * 
+	 *
 	 * @param process MProcess to execute
 	 * @param parameters List of parameter maps (name, value, valueTo)
 	 * @param recordId Record ID (0 if not applicable)
@@ -55,7 +58,7 @@ public class GraphQLProcessRunner {
 	 */
 	public static Map<String, Object> executeProcess(MProcess process, List<Map<String, Object>> parameters,
 			int recordId, String recordUU, int tableId, String tableName, String reportType, String trxName) {
-		
+
 		// Resolve tableId from tableName if needed (like REST API does with model-name)
 		if (recordId > 0 && tableId == 0 && tableName != null && !tableName.isEmpty()) {
 			MTable table = MTable.get(Env.getCtx(), tableName);
@@ -63,7 +66,7 @@ public class GraphQLProcessRunner {
 				tableId = table.getAD_Table_ID();
 			}
 		}
-		
+
 		MPInstance pInstance = new MPInstance(process, recordId, 0, recordUU);
 		if (trxName != null)
 			pInstance.set_TrxName(trxName);
@@ -81,14 +84,14 @@ public class GraphQLProcessRunner {
 		pi.setAD_PInstance_ID(pInstance.getAD_PInstance_ID());
 		pi.setRecord_ID(recordId);
 		pi.setTable_ID(tableId);
-		
+
 		// Set report type if specified
 		if (process.isReport() && reportType != null) {
 			String type = reportType.toUpperCase();
 			if ("HTML".equals(type) || "CSV".equals(type) || "XLS".equals(type) || "PDF".equals(type)) {
 				pi.setReportType(type);
 				pi.setExport(true);
-				
+
 				if ("HTML".equals(type))
 					pi.setExportFileExtension("html");
 				else if ("CSV".equals(type))
@@ -105,12 +108,15 @@ public class GraphQLProcessRunner {
 			throw new RuntimeException(Msg.getMsg(Env.getCtx(), "ProcessAlreadyRunning"));
 		}
 
+		// Batch/headless mode - no ZK Desktop available in API context
+		pi.setIsBatch(true);
+
 		// Execute process
 		Trx trx = null;
 		String effectiveTrxName = trxName != null ? trxName : ThreadLocalTrx.getTrxName();
 		if (effectiveTrxName != null)
 			trx = Trx.get(effectiveTrxName, false);
-		
+
 		ServerProcessCtl.process(pi, trx);
 
 		// Build result
@@ -122,22 +128,22 @@ public class GraphQLProcessRunner {
 		result.put("isError", pi.isError());
 		result.put("summary", pi.getSummary());
 		result.put("logInfo", pi.getLogInfo());
-		
+
 		// Add report/export file if generated
 		if (process.isReport() && pi.getPDFReport() != null) {
 			File reportFile = pi.getPDFReport();
 			result.put("reportFileName", reportFile.getName());
 			result.put("reportFileSize", reportFile.length());
-			// Optionally encode file as base64
-			// result.put("reportContent", encodeFileToBase64(reportFile));
+			result.put("reportContent", encodeFileToBase64(reportFile));
+			reportFile.delete();
 		}
-		
+
 		if (pi.isExport() && pi.getExportFile() != null) {
 			File exportFile = pi.getExportFile();
 			result.put("exportFileName", exportFile.getName());
 			result.put("exportFileSize", exportFile.length());
-			// Optionally encode file as base64
-			// result.put("exportContent", encodeFileToBase64(exportFile));
+			result.put("exportContent", encodeFileToBase64(exportFile));
+			exportFile.delete();
 		}
 
 		return result;
@@ -154,12 +160,12 @@ public class GraphQLProcessRunner {
 		for (MPInstancePara instanceParam : instanceParams) {
 			instanceByName.put(instanceParam.getParameterName(), instanceParam);
 		}
-		
+
 		for (Map<String, Object> paramInput : parameters) {
 			String paramName = (String) paramInput.get("name");
 			Object value = paramInput.get("value");
 			Object valueTo = paramInput.get("valueTo");
-			
+
 			// Find parameter definition
 			MProcessPara paramDef = null;
 			for (MProcessPara p : processParams) {
@@ -168,24 +174,24 @@ public class GraphQLProcessRunner {
 					break;
 				}
 			}
-			
+
 			if (paramDef == null) {
 				throw new IllegalArgumentException("Invalid parameter: " + paramName);
 			}
-			
+
 			MPInstancePara iPara = instanceByName.get(paramName);
 			if (iPara == null) {
 				throw new IllegalArgumentException("Missing instance parameter for: " + paramName);
 			}
-			
+
 			// Convert and set value based on display type
 			int displayType = paramDef.getAD_Reference_ID();
-			
+
 			if (value != null) {
 				Object convertedValue = convertValue(value, displayType);
 				setParameterValue(iPara, convertedValue, displayType);
 			}
-			
+
 			if (valueTo != null && paramDef.isRange()) {
 				Object convertedValueTo = convertValue(valueTo, displayType);
 				setParameterValueTo(iPara, convertedValueTo, displayType);
@@ -205,32 +211,37 @@ public class GraphQLProcessRunner {
 	private static Object convertValue(Object value, int displayType) {
 		if (value == null)
 			return null;
-		
+
 		String valueStr = value.toString();
-		
+
 		try {
 			switch (displayType) {
 				case DisplayType.Integer:
 				case DisplayType.ID:
+					return Integer.parseInt(valueStr);
 				case DisplayType.TableDir:
 				case DisplayType.Table:
 				case DisplayType.Search:
-					return Integer.parseInt(valueStr);
-					
+					try {
+						return Integer.parseInt(valueStr);
+					} catch (NumberFormatException e) {
+						return valueStr;
+					}
+
 				case DisplayType.Number:
 				case DisplayType.Amount:
 				case DisplayType.Quantity:
 				case DisplayType.CostPrice:
 					return new BigDecimal(valueStr);
-					
+
 				case DisplayType.Date:
 				case DisplayType.DateTime:
 				case DisplayType.Time:
 					return parseTimestamp(valueStr, displayType);
-					
+
 				case DisplayType.YesNo:
 					return "true".equalsIgnoreCase(valueStr) || "Y".equalsIgnoreCase(valueStr);
-					
+
 				default:
 					return valueStr;
 			}
@@ -245,7 +256,7 @@ public class GraphQLProcessRunner {
 	private static Timestamp parseTimestamp(String valueStr, int displayType) {
 		if (valueStr == null || valueStr.trim().isEmpty())
 			return null;
-		
+
 		try {
 			// Try ISO 8601 formats first
 			String pattern;
@@ -256,7 +267,7 @@ public class GraphQLProcessRunner {
 			} else { // DateTime
 				pattern = "yyyy-MM-dd'T'HH:mm:ss";
 			}
-			
+
 			SimpleDateFormat sdf = new SimpleDateFormat(pattern);
 			java.util.Date parsed = sdf.parse(valueStr.replace("Z", "").trim());
 			return new Timestamp(parsed.getTime());
@@ -311,6 +322,15 @@ public class GraphQLProcessRunner {
 			iPara.setP_String_To(((Boolean) value) ? "Y" : "N");
 		} else {
 			iPara.setP_String_To(value.toString());
+		}
+	}
+
+	private static String encodeFileToBase64(File file) {
+		try {
+			byte[] bytes = Files.readAllBytes(file.toPath());
+			return Base64.getEncoder().encodeToString(bytes);
+		} catch (IOException e) {
+			throw new RuntimeException("Failed to encode file: " + file.getName(), e);
 		}
 	}
 }

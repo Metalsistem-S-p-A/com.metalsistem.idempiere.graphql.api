@@ -1,6 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry exported="true" kind="lib" path="lib/graphql-builder.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry kind="src" output="target/classes" path="src">
+		<attributes>
+			<attribute name="optional" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry exported="true" kind="lib" path="lib/java-jwt.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jwks-rsa.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/graphql-java.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/graphql-java-extended-scalars.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/activemq-client.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/animal-sniffer-annotations.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/antlr4-runtime.jar"/>
@@ -102,23 +117,7 @@
 	<classpathentry exported="true" kind="lib" path="lib/slf4j-jdk14.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/super-csv.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/validation-api.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/graphql-java.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/graphql-java-extended-scalars.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
-		<attributes>
-			<attribute name="module" value="true"/>
-			<attribute name="maven.pomderived" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
-	<classpathentry kind="src" output="target/classes" path="src">
-		<attributes>
-			<attribute name="optional" value="true"/>
-			<attribute name="maven.pomderived" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry exported="true" kind="lib" path="lib/java-jwt.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/jwks-rsa.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/graphql-builder.jar"/>
 	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
 		<attributes>
 			<attribute name="maven.pomderived" value="true"/>

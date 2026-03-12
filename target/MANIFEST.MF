@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: GraphQL API
 Bundle-SymbolicName: com.metalsistem.idempiere.graphql.api
-Bundle-Version: 13.0.0.202602271125
+Bundle-Version: 13.0.0.202603120849
 Bundle-Activator: com.metalsistem.idempiere.graphql.api.application.Acti
  vator
 Bundle-Vendor: Metalsistem
@@ -94,5 +94,5 @@ Service-Component: OSGI-INF/*.xml
 Eclipse-BundleShape: dir
 Require-Capability: osgi.extender;filter:="(&(osgi.extender=osgi.compone
  nt)(version>=1.5.0)(!(version>=2.0.0)))",osgi.ee;filter:="(&(osgi.ee=Ja
- vaSE)(version=21))"
+ vaSE)(version=17))"
 
