@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: GraphQL API
 Bundle-SymbolicName: com.metalsistem.idempiere.graphql.api
-Bundle-Version: 13.0.0.202603120849
+Bundle-Version: 13.0.0.202603161344
 Bundle-Activator: com.metalsistem.idempiere.graphql.api.application.Acti
  vator
 Bundle-Vendor: Metalsistem

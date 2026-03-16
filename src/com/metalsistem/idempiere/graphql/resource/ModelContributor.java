@@ -140,7 +140,6 @@ public class ModelContributor implements IGraphQLSchemaContributor {
 		Map<String, Object> where = env.getArgument("where");
 		String select = env.getArgument("select");
 		String orderBy = env.getArgument("orderBy");
-		
 		List<Map<String, Object>> join = env.getArgument("join");
 		Integer pageSize = env.getArgument("pageSize");
 		Integer page = env.getArgument("page");
@@ -148,30 +147,39 @@ public class ModelContributor implements IGraphQLSchemaContributor {
 
 		String[] selectedColumns = GraphQLQueryBuilder.resolveSelectedColumns(tableName,
 				GraphQLQueryBuilder.splitCsv(select), join);
-		String[] queryColumns = GraphQLQueryBuilder.extractBaseTableColumnsForQuery(tableName, selectedColumns);
 		List<Map<String, Object>> orderByList = GraphQLQueryBuilder.parseOrderBy(orderBy);
 
 		int safePageSize = pageSize == null ? DEFAULT_PAGE_SIZE : Math.max(1, Math.min(pageSize.intValue(), MAX_PAGE_SIZE));
 		int safePage = page == null ? 0 : Math.max(0, page.intValue());
-		
-		Query countQuery = GraphQLQueryBuilder.buildQuery(tableName, where, join, orderByList, true, trxId);
-		int totalRecords = countQuery.count();
-		int totalPages = totalRecords <= 0 ? 0 : (int) Math.ceil((double) totalRecords / (double) safePageSize);
-
-		Query query = GraphQLQueryBuilder.buildQuery(tableName, where, join, orderByList, true, trxId);
-		if (queryColumns.length > 0)
-			query.selectColumns(queryColumns);
-		query.setPage(safePageSize, safePage);
-		List<PO> list = query.list();
 
 		List<Object> rows = new ArrayList<>();
-		if (list != null && !list.isEmpty()) {
-			rows = new ArrayList<>(list.size());
-			for (PO po : list) {
-				Map<String, Object> row = GraphQLQueryBuilder.poToMap(po, tableName, selectedColumns, join, trxId);
+		int totalRecords;
+
+		if (join != null && !join.isEmpty()) {
+			// path JDBC diretto: evita duplicazione PO con JOIN 1-a-molti
+			totalRecords = GraphQLQueryBuilder.countWithJoins(tableName, where, join, true, trxId);
+			List<Map<String, Object>> rawRows = GraphQLQueryBuilder.listWithJoins(
+					tableName, selectedColumns, where, join, orderByList, true, safePageSize, safePage, trxId);
+			for (Map<String, Object> row : rawRows)
 				rows.add(GraphQLQueryBuilder.toLowerCaseKeys(row));
+		} else {
+			// path PO esistente (nessun JOIN)
+			String[] queryColumns = GraphQLQueryBuilder.extractBaseTableColumnsForQuery(tableName, selectedColumns);
+			Query countQuery = GraphQLQueryBuilder.buildQuery(tableName, where, null, orderByList, true, trxId);
+			totalRecords = countQuery.count();
+			Query query = GraphQLQueryBuilder.buildQuery(tableName, where, null, orderByList, true, trxId);
+			if (queryColumns.length > 0)
+				query.selectColumns(queryColumns);
+			query.setPage(safePageSize, safePage);
+			List<PO> list = query.list();
+			if (list != null) {
+				for (PO po : list)
+					rows.add(GraphQLQueryBuilder.toLowerCaseKeys(
+							GraphQLQueryBuilder.poToMap(po, tableName, selectedColumns)));
 			}
 		}
+
+		int totalPages = totalRecords <= 0 ? 0 : (int) Math.ceil((double) totalRecords / (double) safePageSize);
 
 		Map<String, Object> response = new java.util.LinkedHashMap<>();
 		response.put("results", rows);

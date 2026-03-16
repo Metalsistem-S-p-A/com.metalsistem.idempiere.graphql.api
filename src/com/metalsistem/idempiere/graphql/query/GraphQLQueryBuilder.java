@@ -32,6 +32,7 @@ import javax.ws.rs.core.Response.Status;
 import org.compiere.model.MColumn;
 import org.compiere.model.GridField;
 import org.compiere.model.GridFieldVO;
+import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
@@ -426,6 +427,118 @@ public class GraphQLQueryBuilder {
 			return condition;
 		String regex = "(?i)\\b" + Pattern.quote(tableName) + "\\.";
 		return condition.replaceAll(regex, alias + ".");
+	}
+
+	private static String buildJoinsSql(String tableName, List<Map<String, Object>> joinSpecs) {
+		if (joinSpecs == null || joinSpecs.isEmpty())
+			return "";
+		StringBuilder joins = new StringBuilder();
+		for (Map<String, Object> joinSpec : joinSpecs) {
+			String joinTable = stringValue(joinSpec.get("table"));
+			if (Util.isEmpty(joinTable, true))
+				continue;
+			String joinType = stringValue(joinSpec.get("type"));
+			if (Util.isEmpty(joinType, true)) joinType = "INNER";
+			else joinType = joinType.toUpperCase();
+			String alias = stringValue(joinSpec.get("alias"));
+			boolean hasUserAlias = !Util.isEmpty(alias, true);
+			String effectiveAlias = hasUserAlias ? alias : joinTable;
+			String onCondition = stringValue(joinSpec.get("on"));
+			if ("CROSS".equalsIgnoreCase(joinType)) {
+				joins.append(" CROSS JOIN ").append(joinTable).append(' ').append(effectiveAlias);
+			} else {
+				if (Util.isEmpty(onCondition, true))
+					onCondition = autoDetectJoinCondition(tableName, joinTable, effectiveAlias);
+				else if (!hasUserAlias)
+					onCondition = replaceJoinQualifier(onCondition, joinTable, effectiveAlias);
+				if (!Util.isEmpty(onCondition, true)) {
+					joins.append(' ').append(joinType).append(" JOIN ")
+						 .append(joinTable).append(' ').append(effectiveAlias)
+						 .append(" ON ").append(onCondition);
+				}
+			}
+		}
+		return joins.toString();
+	}
+
+	public static int countWithJoins(String tableName, Map<String, Object> filter,
+			List<Map<String, Object>> joinSpecs, boolean onlyActive, String trxName) {
+
+		List<Object> parameters = new ArrayList<>();
+		String whereClause = buildWhereClause(tableName, filter, parameters);
+		if (onlyActive) {
+			String activeClause = tableName + ".IsActive='Y'";
+			whereClause = Util.isEmpty(whereClause, true)
+					? activeClause : "(" + whereClause + ") AND " + activeClause;
+		}
+
+		String baseSql = "SELECT COUNT(*) FROM " + tableName
+				+ buildJoinsSql(tableName, joinSpecs)
+				+ (Util.isEmpty(whereClause, true) ? "" : " WHERE " + whereClause);
+
+		String finalSql = MRole.getDefault(Env.getCtx(), false)
+				.addAccessSQL(baseSql, tableName, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
+
+		try (PreparedStatement pstmt = DB.prepareStatement(finalSql, trxName)) {
+			for (int i = 0; i < parameters.size(); i++)
+				pstmt.setObject(i + 1, parameters.get(i));
+			try (ResultSet rs = pstmt.executeQuery()) {
+				if (rs.next()) return rs.getInt(1);
+			}
+		} catch (SQLException ex) {
+			throw new RuntimeException(ex.getMessage(), ex);
+		}
+		return 0;
+	}
+
+	public static List<Map<String, Object>> listWithJoins(String tableName, String[] selectedColumns,
+			Map<String, Object> filter, List<Map<String, Object>> joinSpecs,
+			List<Map<String, Object>> orderByList, boolean onlyActive, int pageSize, int page,
+			String trxName) {
+
+		List<Object> parameters = new ArrayList<>();
+		String whereClause = buildWhereClause(tableName, filter, parameters);
+		if (onlyActive) {
+			String activeClause = tableName + ".IsActive='Y'";
+			whereClause = Util.isEmpty(whereClause, true)
+					? activeClause : "(" + whereClause + ") AND " + activeClause;
+		}
+
+		String selectList = (selectedColumns == null || selectedColumns.length == 0)
+				? tableName + ".*"
+				: String.join(", ", selectedColumns);
+
+		StringBuilder baseSql = new StringBuilder("SELECT ").append(selectList)
+				.append(" FROM ").append(tableName)
+				.append(buildJoinsSql(tableName, joinSpecs));
+		if (!Util.isEmpty(whereClause, true))
+			baseSql.append(" WHERE ").append(whereClause);
+
+		String filteredSql = MRole.getDefault(Env.getCtx(), false)
+				.addAccessSQL(baseSql.toString(), tableName, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
+
+		StringBuilder finalSql = new StringBuilder(filteredSql);
+		String orderBy = buildOrderBy(orderByList);
+		if (!Util.isEmpty(orderBy, true))
+			finalSql.append(" ORDER BY ").append(orderBy);
+		finalSql.append(" LIMIT ").append(pageSize).append(" OFFSET ").append((long) page * pageSize);
+
+		List<Map<String, Object>> results = new ArrayList<>();
+		try (PreparedStatement pstmt = DB.prepareStatement(finalSql.toString(), trxName)) {
+			for (int i = 0; i < parameters.size(); i++)
+				pstmt.setObject(i + 1, parameters.get(i));
+			try (ResultSet rs = pstmt.executeQuery()) {
+				while (rs.next()) {
+					Map<String, Object> row = new LinkedHashMap<>();
+					for (int i = 0; i < selectedColumns.length; i++)
+						row.put(selectedColumns[i], rs.getObject(i + 1));
+					results.add(row);
+				}
+			}
+		} catch (SQLException ex) {
+			throw new RuntimeException(ex.getMessage(), ex);
+		}
+		return results;
 	}
 
 	/**
