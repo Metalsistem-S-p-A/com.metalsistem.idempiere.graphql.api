@@ -125,6 +125,10 @@ public class GraphQLQueryBuilder {
 	}
 
 	public static String buildWhereClause(String tableName, Map<String, Object> filterInput, List<Object> parameters) {
+		return buildWhereClause(tableName, null, filterInput, parameters);
+	}
+
+	public static String buildWhereClause(String tableName, String tableAlias, Map<String, Object> filterInput, List<Object> parameters) {
 		if (filterInput == null || filterInput.isEmpty())
 			return "";
 
@@ -135,7 +139,7 @@ public class GraphQLQueryBuilder {
 			if (andFilters != null) {
 				for (Map<String, Object> f : andFilters) {
 					if (f != null && !f.isEmpty()) {
-						String clause = buildWhereClause(tableName, f, parameters);
+						String clause = buildWhereClause(tableName, tableAlias, f, parameters);
 						if (!Util.isEmpty(clause, true))
 							clauses.add("(" + clause + ")");
 					}
@@ -151,7 +155,7 @@ public class GraphQLQueryBuilder {
 			if (orFilters != null) {
 				for (Map<String, Object> f : orFilters) {
 					if (f != null && !f.isEmpty()) {
-						String clause = buildWhereClause(tableName, f, parameters);
+						String clause = buildWhereClause(tableName, tableAlias, f, parameters);
 						if (!Util.isEmpty(clause, true))
 							clauses.add("(" + clause + ")");
 					}
@@ -164,7 +168,7 @@ public class GraphQLQueryBuilder {
 			@SuppressWarnings("unchecked")
 			Map<String, Object> notFilter = (Map<String, Object>) filterInput.get("not");
 			if (notFilter != null && !notFilter.isEmpty()) {
-				String clause = buildWhereClause(tableName, notFilter, parameters);
+				String clause = buildWhereClause(tableName, tableAlias, notFilter, parameters);
 				if (!Util.isEmpty(clause, true))
 					return "NOT (" + clause + ")";
 			}
@@ -192,7 +196,7 @@ public class GraphQLQueryBuilder {
 				tableForConversion = null;
 			}
 
-			String resolvedTable = resolveTableForConversion(qualifier, tableName);
+			String resolvedTable = resolveTableForConversion(qualifier, tableName, tableAlias);
 			if (!hasExplicitCast && resolvedTable != null && extractedColumn != null)
 				tableForConversion = resolvedTable;
 			else
@@ -264,10 +268,17 @@ public class GraphQLQueryBuilder {
 	}
 
 	private static String resolveTableForConversion(String qualifier, String baseTableName) {
+		return resolveTableForConversion(qualifier, baseTableName, null);
+	}
+
+	private static String resolveTableForConversion(String qualifier, String baseTableName, String tableAlias) {
 		if (Util.isEmpty(qualifier, true))
 			return null;
 
 		if (qualifier.equalsIgnoreCase(baseTableName))
+			return baseTableName;
+
+		if (!Util.isEmpty(tableAlias, true) && qualifier.equalsIgnoreCase(tableAlias))
 			return baseTableName;
 
 		MTable table = MTable.get(Env.getCtx(), qualifier);
@@ -406,17 +417,23 @@ public class GraphQLQueryBuilder {
 	 * @return JOIN ON condition or empty string if cannot detect
 	 */
 	private static String autoDetectJoinCondition(String baseTable, String joinTable, String joinReference) {
+		return autoDetectJoinCondition(baseTable, null, joinTable, joinReference);
+	}
+
+	private static String autoDetectJoinCondition(String baseTable, String baseAlias, String joinTable, String joinReference) {
 		// Try to find FK column in base table pointing to join table
 		MTable base = MTable.get(Env.getCtx(), baseTable);
 		if (base == null)
 			return "";
+
+		String baseQualifier = !Util.isEmpty(baseAlias, true) ? baseAlias : baseTable;
 
 		// Look for column named <JoinTable>_ID in base table
 		String fkColumnName = joinTable + "_ID";
 		MColumn fkColumn = base.getColumn(fkColumnName);
 		if (fkColumn != null) {
 			// Assuming PK of joined table is <JoinTable>_ID
-			return baseTable + "." + fkColumnName + "=" + joinReference + "." + fkColumnName;
+			return baseQualifier + "." + fkColumnName + "=" + joinReference + "." + fkColumnName;
 		}
 
 		return "";
@@ -430,6 +447,10 @@ public class GraphQLQueryBuilder {
 	}
 
 	private static String buildJoinsSql(String tableName, List<Map<String, Object>> joinSpecs) {
+		return buildJoinsSql(tableName, null, joinSpecs);
+	}
+
+	private static String buildJoinsSql(String tableName, String tableAlias, List<Map<String, Object>> joinSpecs) {
 		if (joinSpecs == null || joinSpecs.isEmpty())
 			return "";
 		StringBuilder joins = new StringBuilder();
@@ -448,7 +469,7 @@ public class GraphQLQueryBuilder {
 				joins.append(" CROSS JOIN ").append(joinTable).append(' ').append(effectiveAlias);
 			} else {
 				if (Util.isEmpty(onCondition, true))
-					onCondition = autoDetectJoinCondition(tableName, joinTable, effectiveAlias);
+					onCondition = autoDetectJoinCondition(tableName, tableAlias, joinTable, effectiveAlias);
 				else if (!hasUserAlias)
 					onCondition = replaceJoinQualifier(onCondition, joinTable, effectiveAlias);
 				if (!Util.isEmpty(onCondition, true)) {
@@ -463,21 +484,30 @@ public class GraphQLQueryBuilder {
 
 	public static int countWithJoins(String tableName, Map<String, Object> filter,
 			List<Map<String, Object>> joinSpecs, boolean onlyActive, String trxName) {
+		return countWithJoins(tableName, filter, joinSpecs, onlyActive, trxName, null);
+	}
 
+	public static int countWithJoins(String tableName, Map<String, Object> filter,
+			List<Map<String, Object>> joinSpecs, boolean onlyActive, String trxName, String tableAlias) {
+
+		String effectiveAlias = Util.isEmpty(tableAlias, true) ? null : tableAlias;
 		List<Object> parameters = new ArrayList<>();
-		String whereClause = buildWhereClause(tableName, filter, parameters);
+		String whereClause = buildWhereClause(tableName, effectiveAlias, filter, parameters);
 		if (onlyActive) {
-			String activeClause = tableName + ".IsActive='Y'";
+			String qualifier = effectiveAlias != null ? effectiveAlias : tableName;
+			String activeClause = qualifier + ".IsActive='Y'";
 			whereClause = Util.isEmpty(whereClause, true)
 					? activeClause : "(" + whereClause + ") AND " + activeClause;
 		}
 
-		String baseSql = "SELECT COUNT(*) FROM " + tableName
-				+ buildJoinsSql(tableName, joinSpecs)
+		String fromClause = tableName + (effectiveAlias != null ? " " + effectiveAlias : "");
+		String baseSql = "SELECT COUNT(*) FROM " + fromClause
+				+ buildJoinsSql(tableName, effectiveAlias, joinSpecs)
 				+ (Util.isEmpty(whereClause, true) ? "" : " WHERE " + whereClause);
 
+		String accessQualifier = effectiveAlias != null ? effectiveAlias : tableName;
 		String finalSql = MRole.getDefault(Env.getCtx(), false)
-				.addAccessSQL(baseSql, tableName, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
+				.addAccessSQL(baseSql, accessQualifier, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
 
 		try (PreparedStatement pstmt = DB.prepareStatement(finalSql, trxName)) {
 			for (int i = 0; i < parameters.size(); i++)
@@ -495,27 +525,38 @@ public class GraphQLQueryBuilder {
 			Map<String, Object> filter, List<Map<String, Object>> joinSpecs,
 			List<Map<String, Object>> orderByList, boolean onlyActive, int pageSize, int page,
 			String trxName) {
+		return listWithJoins(tableName, selectedColumns, filter, joinSpecs, orderByList, onlyActive, pageSize, page, trxName, null);
+	}
 
+	public static List<Map<String, Object>> listWithJoins(String tableName, String[] selectedColumns,
+			Map<String, Object> filter, List<Map<String, Object>> joinSpecs,
+			List<Map<String, Object>> orderByList, boolean onlyActive, int pageSize, int page,
+			String trxName, String tableAlias) {
+
+		String effectiveAlias = Util.isEmpty(tableAlias, true) ? null : tableAlias;
 		List<Object> parameters = new ArrayList<>();
-		String whereClause = buildWhereClause(tableName, filter, parameters);
+		String whereClause = buildWhereClause(tableName, effectiveAlias, filter, parameters);
 		if (onlyActive) {
-			String activeClause = tableName + ".IsActive='Y'";
+			String qualifier = effectiveAlias != null ? effectiveAlias : tableName;
+			String activeClause = qualifier + ".IsActive='Y'";
 			whereClause = Util.isEmpty(whereClause, true)
 					? activeClause : "(" + whereClause + ") AND " + activeClause;
 		}
 
 		String selectList = (selectedColumns == null || selectedColumns.length == 0)
-				? tableName + ".*"
+				? (effectiveAlias != null ? effectiveAlias : tableName) + ".*"
 				: String.join(", ", selectedColumns);
 
+		String fromClause = tableName + (effectiveAlias != null ? " " + effectiveAlias : "");
 		StringBuilder baseSql = new StringBuilder("SELECT ").append(selectList)
-				.append(" FROM ").append(tableName)
-				.append(buildJoinsSql(tableName, joinSpecs));
+				.append(" FROM ").append(fromClause)
+				.append(buildJoinsSql(tableName, effectiveAlias, joinSpecs));
 		if (!Util.isEmpty(whereClause, true))
 			baseSql.append(" WHERE ").append(whereClause);
 
+		String accessQualifier = effectiveAlias != null ? effectiveAlias : tableName;
 		String filteredSql = MRole.getDefault(Env.getCtx(), false)
-				.addAccessSQL(baseSql.toString(), tableName, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
+				.addAccessSQL(baseSql.toString(), accessQualifier, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
 
 		StringBuilder finalSql = new StringBuilder(filteredSql);
 		String orderBy = buildOrderBy(orderByList);
@@ -684,12 +725,17 @@ public class GraphQLQueryBuilder {
 	 */
 	public static String[] resolveSelectedColumns(String tableName, List<String> selectColumns,
 			List<Map<String, Object>> joinSpecs) {
+		return resolveSelectedColumns(tableName, selectColumns, joinSpecs, null);
+	}
+
+	public static String[] resolveSelectedColumns(String tableName, List<String> selectColumns,
+			List<Map<String, Object>> joinSpecs, String tableAlias) {
 		MTable table = MTable.get(Env.getCtx(), tableName);
 		if (table == null || table.getAD_Table_ID() <= 0)
 			throw new IDempiereGraphQLException("Invalid table name", "No match found for table name: " + tableName,
 					Status.NOT_FOUND);
 
-		Map<String, String> joinTargetToTable = buildJoinTargetToTable(tableName, joinSpecs);
+		Map<String, String> joinTargetToTable = buildJoinTargetToTable(tableName, tableAlias, joinSpecs);
 
 		if (selectColumns == null || selectColumns.isEmpty()) {
 			if (joinSpecs != null && !joinSpecs.isEmpty()) {
@@ -783,8 +829,14 @@ public class GraphQLQueryBuilder {
 	}
 
 	private static Map<String, String> buildJoinTargetToTable(String baseTableName, List<Map<String, Object>> joinSpecs) {
+		return buildJoinTargetToTable(baseTableName, null, joinSpecs);
+	}
+
+	private static Map<String, String> buildJoinTargetToTable(String baseTableName, String tableAlias, List<Map<String, Object>> joinSpecs) {
 		Map<String, String> targetToTable = new HashMap<>();
 		targetToTable.put(baseTableName.toLowerCase(), baseTableName);
+		if (!Util.isEmpty(tableAlias, true))
+			targetToTable.put(tableAlias.toLowerCase(), baseTableName);
 
 		if (joinSpecs == null || joinSpecs.isEmpty())
 			return targetToTable;

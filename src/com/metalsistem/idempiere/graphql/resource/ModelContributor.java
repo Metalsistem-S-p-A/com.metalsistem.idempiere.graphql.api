@@ -48,6 +48,8 @@ public class ModelContributor implements IGraphQLSchemaContributor {
 								.description("Comma-separated column names (SELECT clause). Defaults to all accessible columns.").build())
 						.argument(newArgument().name("join").type(new GraphQLList(GraphQLInputTypes.JoinSpec))
 								.description("JOIN specifications for querying related tables").build())
+						.argument(newArgument().name("tableAlias").type(GraphQLString)
+								.description("Optional alias for the base table (e.g. 'asi' for 'm_attributesetinstance')").build())
 						.argument(newArgument().name("where").type(GraphQLInputTypes.WhereClause)
 								.description("WHERE clause condition (structured input type)").build())
 						.argument(newArgument().name("orderBy").type(GraphQLString)
@@ -141,12 +143,13 @@ public class ModelContributor implements IGraphQLSchemaContributor {
 		String select = env.getArgument("select");
 		String orderBy = env.getArgument("orderBy");
 		List<Map<String, Object>> join = env.getArgument("join");
+		String tableAlias = env.getArgument("tableAlias");
 		Integer pageSize = env.getArgument("pageSize");
 		Integer page = env.getArgument("page");
 		String trxId = env.getArgument("trxId");
 
 		String[] selectedColumns = GraphQLQueryBuilder.resolveSelectedColumns(tableName,
-				GraphQLQueryBuilder.splitCsv(select), join);
+				GraphQLQueryBuilder.splitCsv(select), join, tableAlias);
 		List<Map<String, Object>> orderByList = GraphQLQueryBuilder.parseOrderBy(orderBy);
 
 		int safePageSize = pageSize == null ? DEFAULT_PAGE_SIZE : Math.max(1, Math.min(pageSize.intValue(), MAX_PAGE_SIZE));
@@ -157,9 +160,9 @@ public class ModelContributor implements IGraphQLSchemaContributor {
 
 		if (join != null && !join.isEmpty()) {
 			// path JDBC diretto: evita duplicazione PO con JOIN 1-a-molti
-			totalRecords = GraphQLQueryBuilder.countWithJoins(tableName, where, join, true, trxId);
+			totalRecords = GraphQLQueryBuilder.countWithJoins(tableName, where, join, true, trxId, tableAlias);
 			List<Map<String, Object>> rawRows = GraphQLQueryBuilder.listWithJoins(
-					tableName, selectedColumns, where, join, orderByList, true, safePageSize, safePage, trxId);
+					tableName, selectedColumns, where, join, orderByList, true, safePageSize, safePage, trxId, tableAlias);
 			for (Map<String, Object> row : rawRows)
 				rows.add(GraphQLQueryBuilder.toLowerCaseKeys(row));
 		} else {
