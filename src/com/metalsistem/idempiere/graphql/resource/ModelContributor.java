@@ -12,6 +12,7 @@ import java.util.Map;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
+import org.compiere.util.Util;
 import com.metalsistem.idempiere.graphql.api.util.GraphQLUtils;
 import com.metalsistem.idempiere.graphql.query.GraphQLInputTypes;
 import com.metalsistem.idempiere.graphql.query.GraphQLQueryBuilder;
@@ -158,8 +159,8 @@ public class ModelContributor implements IGraphQLSchemaContributor {
 		List<Object> rows = new ArrayList<>();
 		int totalRecords;
 
-		if (join != null && !join.isEmpty()) {
-			// path JDBC diretto: evita duplicazione PO con JOIN 1-a-molti
+		if ((join != null && !join.isEmpty()) || !Util.isEmpty(tableAlias, true)) {
+			// path JDBC diretto: evita duplicazione PO con JOIN 1-a-molti, o quando è presente un alias sulla tabella base
 			totalRecords = GraphQLQueryBuilder.countWithJoins(tableName, where, join, true, trxId, tableAlias);
 			List<Map<String, Object>> rawRows = GraphQLQueryBuilder.listWithJoins(
 					tableName, selectedColumns, where, join, orderByList, true, safePageSize, safePage, trxId, tableAlias);
