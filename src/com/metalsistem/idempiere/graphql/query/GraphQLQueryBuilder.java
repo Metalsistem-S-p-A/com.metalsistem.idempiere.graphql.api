@@ -573,6 +573,7 @@ public class GraphQLQueryBuilder {
 					Map<String, Object> row = new LinkedHashMap<>();
 					for (int i = 0; i < selectedColumns.length; i++)
 						row.put(selectedColumns[i], rs.getObject(i + 1));
+					normalizeYesNoValues(row, selectedColumns, tableName, tableAlias, joinSpecs);
 					results.add(row);
 				}
 			}
@@ -580,6 +581,48 @@ public class GraphQLQueryBuilder {
 			throw new RuntimeException(ex.getMessage(), ex);
 		}
 		return results;
+	}
+
+	private static void normalizeYesNoValues(Map<String, Object> row, String[] selectedColumns,
+			String tableName, String tableAlias, List<Map<String, Object>> joinSpecs) {
+		Map<String, String> targetToTable = buildJoinTargetToTable(tableName, tableAlias, joinSpecs);
+		for (String colExpr : selectedColumns) {
+			if (Util.isEmpty(colExpr, true))
+				continue;
+			Object value = row.get(colExpr);
+			if (!(value instanceof String))
+				continue;
+			String strVal = (String) value;
+			if (!"Y".equals(strVal) && !"N".equals(strVal))
+				continue;
+
+			String resolvedTable = tableName;
+			String resolvedColumn;
+			String trimmed = colExpr.trim();
+			if (trimmed.contains(".")) {
+				String[] parts = trimmed.split("\\.", 2);
+				String qualifier = parts[0].trim();
+				resolvedColumn = extractSimpleColumnName(parts[1]);
+				String t = targetToTable.get(qualifier.toLowerCase());
+				if (t != null)
+					resolvedTable = t;
+				else
+					continue;
+			} else {
+				resolvedColumn = extractSimpleColumnName(trimmed);
+			}
+			if (Util.isEmpty(resolvedColumn, true))
+				continue;
+
+			MTable table = MTable.get(Env.getCtx(), resolvedTable);
+			if (table == null)
+				continue;
+			MColumn column = table.getColumn(resolvedColumn);
+			if (column == null || column.getAD_Column_ID() <= 0)
+				continue;
+			if (column.getAD_Reference_ID() == DisplayType.YesNo)
+				row.put(colExpr, Boolean.valueOf("Y".equals(strVal)));
+		}
 	}
 
 	/**

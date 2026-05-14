@@ -28,3 +28,6 @@ target/
 
 # Eclipse IDE settings
 .settings/
+
+# Claude Code
+.claude/
