@@ -543,9 +543,10 @@ public class GraphQLQueryBuilder {
 					? activeClause : "(" + whereClause + ") AND " + activeClause;
 		}
 
-		String selectList = (selectedColumns == null || selectedColumns.length == 0)
+		String[] selectExpressions = buildSelectSqlExpressions(selectedColumns, tableName, effectiveAlias, joinSpecs);
+		String selectList = (selectExpressions == null || selectExpressions.length == 0)
 				? (effectiveAlias != null ? effectiveAlias : tableName) + ".*"
-				: String.join(", ", selectedColumns);
+				: String.join(", ", selectExpressions);
 
 		String fromClause = tableName + (effectiveAlias != null ? " " + effectiveAlias : "");
 		StringBuilder baseSql = new StringBuilder("SELECT ").append(selectList)
@@ -625,6 +626,66 @@ public class GraphQLQueryBuilder {
 		}
 	}
 
+	private static String[] buildSelectSqlExpressions(String[] selectedColumns, String tableName,
+			String tableAlias, List<Map<String, Object>> joinSpecs) {
+		if (selectedColumns == null || selectedColumns.length == 0)
+			return selectedColumns;
+		Map<String, String> targetToTable = buildJoinTargetToTable(tableName, tableAlias, joinSpecs);
+		String[] expressions = new String[selectedColumns.length];
+		for (int i = 0; i < selectedColumns.length; i++)
+			expressions[i] = toSelectSqlExpression(selectedColumns[i], tableName, tableAlias, targetToTable);
+		return expressions;
+	}
+
+	private static String toSelectSqlExpression(String colExpr, String tableName, String tableAlias,
+			Map<String, String> targetToTable) {
+		if (Util.isEmpty(colExpr, true))
+			return colExpr;
+		String trimmed = colExpr.trim();
+		String resolvedTable = tableName;
+		String effectiveQualifier = Util.isEmpty(tableAlias, true) ? tableName : tableAlias;
+		String resolvedColumn;
+		String qualifier = null;
+
+		if (trimmed.contains(".")) {
+			String[] parts = trimmed.split("\\.", 2);
+			qualifier = parts[0].trim();
+			resolvedColumn = extractSimpleColumnName(parts[1]);
+			String t = targetToTable.get(qualifier.toLowerCase());
+			if (t != null) {
+				resolvedTable = t;
+				effectiveQualifier = qualifier;
+			} else {
+				return colExpr;
+			}
+		} else {
+			resolvedColumn = extractSimpleColumnName(trimmed);
+		}
+
+		if (Util.isEmpty(resolvedColumn, true))
+			return colExpr;
+
+		MTable table = MTable.get(Env.getCtx(), resolvedTable);
+		if (table == null)
+			return colExpr;
+
+		MColumn column = table.getColumn(resolvedColumn);
+		if (column == null || column.getAD_Column_ID() <= 0)
+			return colExpr;
+
+		String columnSQL = column.getColumnSQL();
+		if (!Util.isEmpty(columnSQL, true)) {
+			// Virtual column: inline the ColumnSQL, replacing the base table name with the
+			// effective alias if they differ (e.g. when the caller uses tableAlias)
+			String adjusted = columnSQL;
+			if (!resolvedTable.equalsIgnoreCase(effectiveQualifier))
+				adjusted = adjusted.replaceAll("(?i)\\b" + Pattern.quote(resolvedTable) + "\\.", effectiveQualifier + ".");
+			return "(" + adjusted + ")";
+		}
+
+		return colExpr;
+	}
+
 	/**
 	 * Parse ORDER BY string into a list of order specification maps
 	 * 
@@ -697,16 +758,23 @@ public class GraphQLQueryBuilder {
 				if (Util.isEmpty(selected, true))
 					continue;
 				String normalized = selected.trim();
+				String columnName;
 				if (!normalized.contains(".")) {
-					baseColumns.add(normalized);
-					continue;
+					columnName = normalized;
+				} else {
+					String[] parts = normalized.split("\\.", 2);
+					String qualifier = parts[0].trim();
+					if (!qualifier.equalsIgnoreCase(tableName))
+						continue;
+					columnName = parts[1].trim();
 				}
-
-				String[] parts = normalized.split("\\.", 2);
-				String qualifier = parts[0].trim();
-				String column = parts[1].trim();
-				if (qualifier.equalsIgnoreCase(tableName))
-					baseColumns.add(column);
+				// Skip virtual columns: they have a ColumnSQL expression and no physical DB column.
+				// Passing them to Query.selectColumns() causes iDempiere to expand their ColumnSQL
+				// in the SELECT, which can fail if the ColumnSQL references non-existent columns.
+				MColumn col = table.getColumn(columnName);
+				if (col != null && !Util.isEmpty(col.getColumnSQL(), true))
+					continue;
+				baseColumns.add(columnName);
 			}
 		}
 
@@ -719,6 +787,33 @@ public class GraphQLQueryBuilder {
 		}
 
 		return baseColumns.toArray(new String[0]);
+	}
+
+	public static boolean hasVirtualColumns(String tableName, String[] selectedColumns) {
+		if (selectedColumns == null || selectedColumns.length == 0)
+			return false;
+		MTable table = MTable.get(Env.getCtx(), tableName);
+		if (table == null)
+			return false;
+		for (String colExpr : selectedColumns) {
+			if (Util.isEmpty(colExpr, true))
+				continue;
+			String columnName;
+			if (colExpr.contains(".")) {
+				String[] parts = colExpr.trim().split("\\.", 2);
+				if (!parts[0].trim().equalsIgnoreCase(tableName))
+					continue;
+				columnName = extractSimpleColumnName(parts[1]);
+			} else {
+				columnName = extractSimpleColumnName(colExpr.trim());
+			}
+			if (Util.isEmpty(columnName, true))
+				continue;
+			MColumn col = table.getColumn(columnName);
+			if (col != null && !Util.isEmpty(col.getColumnSQL(), true))
+				return true;
+		}
+		return false;
 	}
 
 	/**
@@ -798,6 +893,10 @@ public class GraphQLQueryBuilder {
 			MColumn[] columns = table.getColumns(false);
 			List<String> readableColumns = new ArrayList<>();
 			for (MColumn column : columns) {
+				// Virtual columns (ColumnSQL defined) are excluded from the default select:
+				// they have no physical DB column and must be requested explicitly.
+				if (!Util.isEmpty(column.getColumnSQL(), true))
+					continue;
 				if (GraphQLUtils.hasRoleColumnAccess(table.getAD_Table_ID(), column.getAD_Column_ID(), true))
 					readableColumns.add(column.getColumnName());
 			}
@@ -861,6 +960,8 @@ public class GraphQLQueryBuilder {
 		List<String> readable = new ArrayList<>();
 		MColumn[] columns = table.getColumns(false);
 		for (MColumn column : columns) {
+			if (!Util.isEmpty(column.getColumnSQL(), true))
+				continue;
 			if (GraphQLUtils.hasRoleColumnAccess(table.getAD_Table_ID(), column.getAD_Column_ID(), true)) {
 				if (Util.isEmpty(qualifier, true))
 					readable.add(column.getColumnName());

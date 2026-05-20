@@ -159,7 +159,8 @@ public class ModelContributor implements IGraphQLSchemaContributor {
 		List<Object> rows = new ArrayList<>();
 		int totalRecords;
 
-		if ((join != null && !join.isEmpty()) || !Util.isEmpty(tableAlias, true)) {
+		if ((join != null && !join.isEmpty()) || !Util.isEmpty(tableAlias, true)
+				|| GraphQLQueryBuilder.hasVirtualColumns(tableName, selectedColumns)) {
 			// path JDBC diretto: evita duplicazione PO con JOIN 1-a-molti, o quando è presente un alias sulla tabella base
 			totalRecords = GraphQLQueryBuilder.countWithJoins(tableName, where, join, true, trxId, tableAlias);
 			List<Map<String, Object>> rawRows = GraphQLQueryBuilder.listWithJoins(
