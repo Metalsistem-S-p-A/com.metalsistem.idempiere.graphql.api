@@ -1,26 +1,26 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <?artifactRepository version='1.1.0'?>
 <artifacts size='2'>
-  <artifact classifier='osgi.bundle' id='com.metalsistem.idempiere.graphql.api' version='13.0.0.202605201320'>
+  <artifact classifier='osgi.bundle' id='com.metalsistem.idempiere.graphql.api' version='13.0.0.202605220658'>
     <properties size='9'>
-      <property name='artifact.size' value='217996304'/>
-      <property name='download.size' value='217996304'/>
-      <property name='download.checksum.sha-512' value='3e68a5729df87b7cd4a879b7893dabc7f074f77df8acf544c5855bfe0ab053b8d5eda248c11f04da74317dca2a45ed3362832720ea7e10c8aa39c97cf0ecc646'/>
-      <property name='download.checksum.sha-1' value='2b5d4b5b4f30b1c1aa1693d5769d5663ef2bf1a6'/>
-      <property name='download.checksum.sha-256' value='bab18d1405898e2564595dbc4df8ee80331c9a540c3f1293d5db1c9bb8daedf1'/>
+      <property name='artifact.size' value='217997919'/>
+      <property name='download.size' value='217997919'/>
+      <property name='download.checksum.sha-512' value='7858f591aec8f82250104e981b018b16bcb8d87d2f558eaf59ec12afdf101f2d93e4c9934322f29a5dc5e34732c40aa714fb751e4aa7d6c4ab02d874001d123d'/>
+      <property name='download.checksum.sha-1' value='369a944d41cdc498b42fea2ce3b201fdd83bb45c'/>
+      <property name='download.checksum.sha-256' value='aa785f9ed04f958598f47546548d57a881cb24a25bcb41c4080d7d15892dd09f'/>
       <property name='maven-groupId' value='com.metalsistem.idempiere.extensions'/>
       <property name='maven-artifactId' value='com.metalsistem.idempiere.graphql.api'/>
       <property name='maven-version' value='13.0.0-SNAPSHOT'/>
       <property name='maven-type' value='eclipse-plugin'/>
     </properties>
   </artifact>
-  <artifact classifier='osgi.bundle' id='com.metalsistem.idempiere.graphql.api.source' version='13.0.0.202605201320'>
+  <artifact classifier='osgi.bundle' id='com.metalsistem.idempiere.graphql.api.source' version='13.0.0.202605220658'>
     <properties size='10'>
-      <property name='artifact.size' value='117113'/>
-      <property name='download.size' value='117113'/>
-      <property name='download.checksum.sha-512' value='ea8a9b3c7d6c547f61cf4bdf99a8884fd2f64fb9db03d3cb24a12e0530042a27a3ac6989e81deaabd1d04fed25dc0a80197b1e2eb334dd96cec55c3eb1336dc4'/>
-      <property name='download.checksum.sha-1' value='7af0749c360719818ee8747b07293ef8c175c0b1'/>
-      <property name='download.checksum.sha-256' value='5ed86c71f9d7479258757f5d5421f101bd291e17ece783e19c1adcc587096f5a'/>
+      <property name='artifact.size' value='117923'/>
+      <property name='download.size' value='117923'/>
+      <property name='download.checksum.sha-512' value='f5ccf83a79da598a23041f1ab7dad2f3ed48897ad66ac3dc06ade855c8a5a6433faa60fa47741b17bfbbe3ee36649a98e157b8e2518b22e186c95b0941fe0af6'/>
+      <property name='download.checksum.sha-1' value='9430c160ee082b4ffd6c9f05d9d2250e74102f3a'/>
+      <property name='download.checksum.sha-256' value='4bf92ecd212760a2f94933104e79e3864ac4e53a7484bbfd92ea29e761a542dc'/>
       <property name='maven-groupId' value='com.metalsistem.idempiere.extensions'/>
       <property name='maven-artifactId' value='com.metalsistem.idempiere.graphql.api'/>
       <property name='maven-version' value='13.0.0-SNAPSHOT'/>

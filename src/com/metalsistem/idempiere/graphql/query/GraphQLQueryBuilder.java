@@ -581,7 +581,90 @@ public class GraphQLQueryBuilder {
 		} catch (SQLException ex) {
 			throw new RuntimeException(ex.getMessage(), ex);
 		}
+		postFetchVirtualColumns(results, selectedColumns, tableName, effectiveAlias, joinSpecs, trxName);
 		return results;
+	}
+
+	private static void postFetchVirtualColumns(List<Map<String, Object>> rows, String[] selectedColumns,
+			String tableName, String tableAlias, List<Map<String, Object>> joinSpecs, String trxName) {
+		if (rows.isEmpty()) return;
+		Map<String, String> aliasToTable = buildJoinTargetToTable(tableName, tableAlias, joinSpecs);
+
+		// Collect virtual column info: [colExpr, resolvedTable, columnName, rawColumnSQL]
+		List<String[]> virtualCols = new ArrayList<>();
+		for (String colExpr : selectedColumns) {
+			String trimmed = colExpr.trim();
+			String resolvedTable = tableName;
+			String resolvedColumn;
+			if (trimmed.contains(".")) {
+				String[] parts = trimmed.split("\\.", 2);
+				String t = aliasToTable.get(parts[0].trim().toLowerCase());
+				if (t == null) continue;
+				resolvedTable = t;
+				resolvedColumn = extractSimpleColumnName(parts[1]);
+			} else {
+				resolvedColumn = extractSimpleColumnName(trimmed);
+			}
+			if (Util.isEmpty(resolvedColumn, true)) continue;
+			MTable tbl = MTable.get(Env.getCtx(), resolvedTable);
+			if (tbl == null) continue;
+			MColumn col = tbl.getColumn(resolvedColumn);
+			if (col == null || Util.isEmpty(col.getColumnSQL(), true)) continue;
+			virtualCols.add(new String[]{colExpr, resolvedTable, resolvedColumn, col.getColumnSQL()});
+		}
+		if (virtualCols.isEmpty()) return;
+
+		// Locate base table PK
+		MTable baseTable = MTable.get(Env.getCtx(), tableName);
+		if (baseTable == null) return;
+		String[] keys = baseTable.getKeyColumns();
+		if (keys == null || keys.length == 0) return;
+		String pkCol = keys[0];
+
+		// Find how the PK is keyed in result rows
+		Map<String, Object> firstRow = rows.get(0);
+		String pkKey = null;
+		for (String candidate : new String[]{pkCol, tableName + "." + pkCol,
+				Util.isEmpty(tableAlias, true) ? null : tableAlias + "." + pkCol}) {
+			if (candidate != null && firstRow.containsKey(candidate)) { pkKey = candidate; break; }
+		}
+		if (pkKey == null) return;
+
+		// Collect ordered unique PK values
+		Set<Object> pkSet = new LinkedHashSet<>();
+		for (Map<String, Object> row : rows) {
+			Object pk = row.get(pkKey);
+			if (pk != null) pkSet.add(pk);
+		}
+		if (pkSet.isEmpty()) return;
+		List<Object> pkValues = new ArrayList<>(pkSet);
+		String placeholders = String.join(",", Collections.nCopies(pkValues.size(), "?"));
+
+		for (String[] vc : virtualCols) {
+			String colExpr = vc[0], resolvedTable = vc[1], columnName = vc[2], colSQL = vc[3];
+			String batchSql = "SELECT " + pkCol + ", (" + colSQL + ") FROM " + resolvedTable
+					+ " WHERE " + pkCol + " IN (" + placeholders + ")";
+			Map<Object, Object> pkToValue = new HashMap<>();
+			try (PreparedStatement ps = DB.prepareStatement(batchSql, trxName)) {
+				for (int i = 0; i < pkValues.size(); i++) ps.setObject(i + 1, pkValues.get(i));
+				try (ResultSet vrs = ps.executeQuery()) {
+					while (vrs.next()) pkToValue.put(vrs.getObject(1), vrs.getObject(2));
+				}
+			} catch (SQLException ex) {
+				// Leave virtual column as null if the secondary query fails
+			}
+			MTable tbl = MTable.get(Env.getCtx(), resolvedTable);
+			MColumn col = tbl != null ? tbl.getColumn(columnName) : null;
+			boolean isYesNo = col != null && col.getAD_Reference_ID() == DisplayType.YesNo;
+			for (Map<String, Object> row : rows) {
+				Object pk = row.get(pkKey);
+				if (pk == null) continue;
+				Object val = pkToValue.get(pk);
+				if (isYesNo && val instanceof String)
+					val = Boolean.valueOf("Y".equals(val));
+				row.put(colExpr, val);
+			}
+		}
 	}
 
 	private static void normalizeYesNoValues(Map<String, Object> row, String[] selectedColumns,
@@ -675,12 +758,11 @@ public class GraphQLQueryBuilder {
 
 		String columnSQL = column.getColumnSQL();
 		if (!Util.isEmpty(columnSQL, true)) {
-			// Virtual column: inline the ColumnSQL, replacing the base table name with the
-			// effective alias if they differ (e.g. when the caller uses tableAlias)
-			String adjusted = columnSQL;
-			if (!resolvedTable.equalsIgnoreCase(effectiveQualifier))
-				adjusted = adjusted.replaceAll("(?i)\\b" + Pattern.quote(resolvedTable) + "\\.", effectiveQualifier + ".");
-			return "(" + adjusted + ")";
+			// Virtual columns cannot be inlined here: iDempiere's addAccessSQL uses string
+			// manipulation to locate the main FROM clause, and subqueries in the SELECT list
+			// cause it to find the wrong FROM, producing invalid SQL. Values are fetched in
+			// a dedicated post-processing pass (postFetchVirtualColumns).
+			return "NULL";
 		}
 
 		return colExpr;
