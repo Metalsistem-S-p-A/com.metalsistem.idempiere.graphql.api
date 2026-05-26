@@ -67,7 +67,7 @@ public class GraphQLProcessRunner {
 			}
 		}
 
-		MPInstance pInstance = new MPInstance(process, recordId, 0, recordUU);
+		MPInstance pInstance = new MPInstance(process, tableId, recordId, recordUU);
 		if (trxName != null)
 			pInstance.set_TrxName(trxName);
 		if (!pInstance.save()) {
