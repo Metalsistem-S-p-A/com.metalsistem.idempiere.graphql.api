@@ -115,12 +115,12 @@ public class DefaultGraphQLContributor implements IGraphQLSchemaContributor {
 	public void registerDataFetchers(GraphQLCodeRegistry.Builder registryBuilder) {
 		registryBuilder.dataFetcher(
 			FieldCoordinates.coordinates("Query", "health"),
-			(DataFetcher<String>) env -> "OK"
+			(DataFetcher<String>) _ -> "OK"
 		);
 		
 		registryBuilder.dataFetcher(
 			FieldCoordinates.coordinates("Query", "version"),
-			(DataFetcher<String>) env -> "1.0.0"
+			(DataFetcher<String>) _ -> "1.0.0"
 		);
 		
 		registryBuilder.dataFetcher(

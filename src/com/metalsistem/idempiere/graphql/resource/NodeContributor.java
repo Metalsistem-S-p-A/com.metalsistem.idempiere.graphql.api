@@ -118,7 +118,7 @@ public class NodeContributor implements IGraphQLSchemaContributor {
 	@Override
 	public void registerDataFetchers(Builder registryBuilder) {
 		registryBuilder.dataFetcher(FieldCoordinates.coordinates("Query", "nodes"),
-				(DataFetcher<Object>) env -> resolveGetNodes());
+				(DataFetcher<Object>) _ -> resolveGetNodes());
 		registryBuilder.dataFetcher(FieldCoordinates.coordinates("Query", "nodeInfo"),
 				(DataFetcher<Object>) env -> resolveGetNodeInfo(env.getArgument("id")));
 		registryBuilder.dataFetcher(FieldCoordinates.coordinates("Query", "nodeLogs"),

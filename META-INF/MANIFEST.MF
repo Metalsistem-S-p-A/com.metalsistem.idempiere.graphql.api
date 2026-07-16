@@ -4,7 +4,6 @@ Bundle-Name: GraphQL API
 Bundle-SymbolicName: com.metalsistem.idempiere.graphql.api
 Bundle-Version: 13.0.0.qualifier
 Bundle-Activator: com.metalsistem.idempiere.graphql.api.application.Activator
-Bundle-RequiredExecutionEnvironment: JavaSE-17
 Bundle-Vendor: Metalsistem
 Automatic-Module-Name: org.idempiere.graphql.api
 Import-Package: com.sun.xml.txw2,

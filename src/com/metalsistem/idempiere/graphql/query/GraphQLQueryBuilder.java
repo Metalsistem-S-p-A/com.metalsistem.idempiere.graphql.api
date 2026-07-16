@@ -267,10 +267,6 @@ public class GraphQLQueryBuilder {
 		}
 	}
 
-	private static String resolveTableForConversion(String qualifier, String baseTableName) {
-		return resolveTableForConversion(qualifier, baseTableName, null);
-	}
-
 	private static String resolveTableForConversion(String qualifier, String baseTableName, String tableAlias) {
 		if (Util.isEmpty(qualifier, true))
 			return null;
@@ -444,10 +440,6 @@ public class GraphQLQueryBuilder {
 			return condition;
 		String regex = "(?i)\\b" + Pattern.quote(tableName) + "\\.";
 		return condition.replaceAll(regex, alias + ".");
-	}
-
-	private static String buildJoinsSql(String tableName, List<Map<String, Object>> joinSpecs) {
-		return buildJoinsSql(tableName, null, joinSpecs);
 	}
 
 	private static String buildJoinsSql(String tableName, String tableAlias, List<Map<String, Object>> joinSpecs) {
@@ -726,7 +718,6 @@ public class GraphQLQueryBuilder {
 			return colExpr;
 		String trimmed = colExpr.trim();
 		String resolvedTable = tableName;
-		String effectiveQualifier = Util.isEmpty(tableAlias, true) ? tableName : tableAlias;
 		String resolvedColumn;
 		String qualifier = null;
 
@@ -737,7 +728,6 @@ public class GraphQLQueryBuilder {
 			String t = targetToTable.get(qualifier.toLowerCase());
 			if (t != null) {
 				resolvedTable = t;
-				effectiveQualifier = qualifier;
 			} else {
 				return colExpr;
 			}
