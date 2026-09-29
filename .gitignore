@@ -12,6 +12,7 @@
 
 # Package Files #
 *.jar
+!lib/*.jar
 *.war
 *.nar
 *.ear
@@ -31,3 +32,4 @@ target/
 
 # Claude Code
 .claude/
+/target

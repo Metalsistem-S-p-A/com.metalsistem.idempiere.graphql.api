@@ -110,13 +110,13 @@ public class ServerContributor implements IGraphQLSchemaContributor {
 
 	@Override
 	public void registerDataFetchers(Builder registryBuilder) {
-		registryBuilder.dataFetcher(FieldCoordinates.coordinates("Query", "servers"), (DataFetcher<Object>) env -> getServers());
+		registryBuilder.dataFetcher(FieldCoordinates.coordinates("Query", "servers"), (DataFetcher<Object>) _ -> getServers());
 		registryBuilder.dataFetcher(FieldCoordinates.coordinates("Query", "server"), (DataFetcher<Object>) env -> getServer(env.getArgument("id")));
 		registryBuilder.dataFetcher(FieldCoordinates.coordinates("Query", "serverLogs"), (DataFetcher<Object>) env -> getServerLogs(env.getArgument("id")));
 		registryBuilder.dataFetcher(FieldCoordinates.coordinates("Query", "scheduler"), (DataFetcher<Object>) env -> getScheduler(((Number) env.getArgument("id")).intValue()));
 		registryBuilder.dataFetcher(FieldCoordinates.coordinates("Mutation", "changeServerState"), (DataFetcher<Object>) env -> changeServerState(env.getArgument("id")));
 		registryBuilder.dataFetcher(FieldCoordinates.coordinates("Mutation", "runServer"), (DataFetcher<Object>) env -> runServer(env.getArgument("id")));
-		registryBuilder.dataFetcher(FieldCoordinates.coordinates("Mutation", "reloadServers"), (DataFetcher<Object>) env -> reloadServers());
+		registryBuilder.dataFetcher(FieldCoordinates.coordinates("Mutation", "reloadServers"), (DataFetcher<Object>) _ -> reloadServers());
 		registryBuilder.dataFetcher(FieldCoordinates.coordinates("Mutation", "addScheduler"), (DataFetcher<Object>) env -> addScheduler(((Number) env.getArgument("id")).intValue()));
 		registryBuilder.dataFetcher(FieldCoordinates.coordinates("Mutation", "removeScheduler"), (DataFetcher<Object>) env -> removeScheduler(((Number) env.getArgument("id")).intValue()));
 	}
